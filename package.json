@@ -1,0 +1,27 @@
+{
+  "name": "out-out",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "process:listings": "node ./scripts/process-listings.mjs",
+    "sync:supabase": "node ./scripts/sync-to-supabase.mjs"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.7",
+    "astro": "^5.8.0",
+    "tailwindcss": "^4.1.7"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-astro": "^1.2.0",
+    "eslint-plugin-astro": "^1.2.0",
+    "@supabase/supabase-js": "^2.44.4",
+    "dotenv": "^16.4.5"
+  }
+}

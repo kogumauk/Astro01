@@ -1,0 +1,80 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import type { BusinessListing, AddressComponent } from '../../../types/BusinessListing';
+import PaginationControls from '../../../components/PaginationControls.astro';
+import type { GetStaticPathsOptions } from 'astro'; // New import
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+  const allListings = await getCollection('listings');
+
+  const locations = new Map<string, CollectionEntry<'listings'>[]>();
+
+  allListings.forEach(listing => {
+    const areaComponent = listing.data.addressComponents.find(
+      (component: AddressComponent) =>
+        component.types.includes('postal_town') || component.types.includes('locality')
+    );
+
+    if (areaComponent) {
+      const areaName = areaComponent.longText;
+      if (!locations.has(areaName)) {
+        locations.set(areaName, []);
+      }
+      locations.get(areaName)?.push(listing);
+    }
+  });
+
+  let paginatedRoutes = [];
+  for (const [areaName, listingsInArea] of Array.from(locations.entries())) {
+    paginatedRoutes.push(
+      ...paginate(listingsInArea, {
+        params: { area: areaName },
+        props: { areaName: areaName },
+        pageSize: 10,
+      })
+    );
+  }
+  return paginatedRoutes;
+}
+
+interface Props {
+  page: {
+    data: CollectionEntry<'listings'>[];
+    currentPage: number;
+    totalPages: number;
+    url: {
+      prev: string | undefined;
+      next: string | undefined;
+    };
+  };
+  areaName: string;
+}
+
+const { page, areaName } = Astro.props;
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Locations', href: '/locations' },
+  { label: areaName },
+];
+---
+
+<Layout
+  title={`Businesses in ${areaName} - Page ${page.currentPage}`}
+  description={`Find businesses in ${areaName}. View listings, reviews, and more on UK Biz Directory. Page ${page.currentPage}.`}
+  keywords={`${areaName}, businesses, directory, listings, reviews`}
+  canonicalUrl={page.currentPage === 1 ? Astro.url.origin + Astro.url.pathname.replace(/\/\d+$/, '') : Astro.url.origin + Astro.url.pathname}
+  breadcrumbs={breadcrumbs}
+>
+  <main>
+    <h1>Businesses in {areaName}</h1>
+    <h2>Businesses:</h2>
+    <ul>
+      {page.data.map((listing) => (
+        <li>{listing.data.name.text}</li>
+      ))}
+    </ul>
+    <PaginationControls page={page} />
+  </main>
+</Layout>

@@ -1,0 +1,32 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const breadcrumbs = [{ label: 'Home', href: '/' }];
+---
+
+<Layout
+	title="Home"
+	description="Find local businesses and services in the UK. Your comprehensive directory for businesses across various categories and locations."
+	keywords="UK businesses, local services, business directory, categories, locations"
+	canonicalUrl={Astro.url.origin + Astro.url.pathname}
+	breadcrumbs={breadcrumbs}
+>
+	<main>
+		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
+		<p>
+			To get started, open <code>src/pages/index.astro</code> and start editing.
+		</p>
+		<p>
+			The <code>src/pages/index.astro</code> file is a regular <a href="https://docs.astro.build/en/core-concepts/astro-pages/">Astro Page</a>.
+			It has some special characteristics though:
+		</p>
+		<ul>
+			<li>
+				It's the home page of your website. Try changing the content and watch your browser update automatically.
+			</li>
+			<li>
+				It has a dynamic route, meaning that it can be accessed from multiple URLs.
+			</li>
+		</ul>
+	</main>
+</Layout>

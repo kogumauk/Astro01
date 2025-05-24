@@ -1,0 +1,70 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import type { BusinessListing } from '../../types/BusinessListing.d.ts';
+
+export async function getStaticPaths() {
+  const allListings = await getCollection('listings');
+
+  return allListings.map((listing) => {
+    // Assuming the slug is part of the listing entry's id or a derived property
+    // If the slug is not directly available, you might need to process the name
+    // or another unique identifier to create a URL-friendly slug.
+    // For now, let's assume the entry.slug is what we need.
+    return {
+      params: { slug: listing.id },
+      props: { listing: listing.data },
+    };
+  });
+}
+
+interface Props {
+  listing: BusinessListing;
+}
+
+const { listing } = Astro.props;
+
+const businessName = listing.name?.text || 'N/A';
+const formattedAddress = listing.formattedAddress || 'N/A';
+const phoneNumber = listing.nationalPhoneNumber || listing.internationalPhoneNumber || 'N/A';
+const website = listing.websiteUri;
+const openingHours = listing.currentOpeningHours?.weekdayDescriptions || [];
+
+const townComponent = listing.addressComponents?.find(
+  (component) => component.types.includes('postal_town') || component.types.includes('locality')
+);
+const town = townComponent ? townComponent.longText : 'Unknown Town';
+const category = listing.category || 'Unknown Category';
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: category, href: `/${category}` },
+  { label: businessName },
+];
+---
+
+<Layout
+  title={`${businessName} - ${category} in ${town}`}
+  description={`Details for ${businessName}, a ${category} in ${town}. Find address, phone, hours, and reviews on UK Biz Directory.`}
+  keywords={`${businessName}, ${category}, ${town}, business, reviews, contact, hours`}
+  canonicalUrl={Astro.url.origin + Astro.url.pathname}
+  breadcrumbs={breadcrumbs}
+>
+  <main>
+    <h1>{businessName}</h1>
+    <p><strong>Address:</strong> {formattedAddress}</p>
+    {phoneNumber !== 'N/A' && <p><strong>Phone:</strong> <a href={`tel:${phoneNumber}`}>{phoneNumber}</a></p>}
+    {website && website !== '' && <p><strong>Website:</strong> <a href={website} target="_blank" rel="noopener noreferrer">{website}</a></p>}
+    {openingHours.length > 0 && (
+      <div>
+        <h2>Opening Hours:</h2>
+        <ul>
+          {openingHours.map((hour) => (
+            <li>{hour}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </main>
+</Layout>

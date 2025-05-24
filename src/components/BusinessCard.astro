@@ -1,0 +1,44 @@
+---
+import type { BusinessListing } from '../types/BusinessListing';
+
+interface Props {
+  business: BusinessListing;
+}
+
+const { business } = Astro.props;
+
+const businessUrl = `/business/${business.id}/`;
+
+// Find locality from addressComponents
+const localityComponent = business.addressComponents.find(comp => comp.types.includes('locality'));
+const locality = localityComponent ? localityComponent.longText : 'N/A';
+---
+
+<article class="bg-white rounded-lg shadow-md p-6 mb-4">
+  <h3 class="text-xl font-semibold mb-2">
+    <a href={businessUrl} class="text-blue-600 hover:underline">
+      {business.name.text}
+    </a>
+  </h3>
+  {business.description && (
+    <p class="text-gray-700 mb-2">
+      {business.description.substring(0, 150)}{business.description.length > 150 ? '...' : ''}
+    </p>
+  )}
+  <p class="text-gray-600 text-sm mb-1">
+    <span class="font-medium">Category:</span> {business.primaryTypeDisplayName?.text || 'N/A'}
+  </p>
+  <p class="text-gray-600 text-sm mb-1">
+    <span class="font-medium">Location:</span> {locality}
+  </p>
+  {business.rating && (
+    <p class="text-gray-600 text-sm mb-1">
+      <span class="font-medium">Rating:</span> {business.rating} stars ({business.reviewCount || 0} reviews)
+    </p>
+  )}
+  {business.currentOpeningHours && (
+    <p class="text-gray-600 text-sm">
+      <span class="font-medium">Hours:</span> {business.currentOpeningHours.weekdayDescriptions?.join(', ') || business.currentOpeningHours.nextOpenTime || 'N/A'}
+    </p>
+  )}
+</article>
