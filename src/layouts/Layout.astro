@@ -1,6 +1,6 @@
 ---
 import Breadcrumbs from '../components/Breadcrumbs.astro';
-import SearchBar from '../components/SearchBar.astro';
+import '../styles/global.css';
 
 interface Props {
 	title: string;
@@ -11,7 +11,7 @@ interface Props {
 }
 
 const { title, description, keywords, canonicalUrl, breadcrumbs } = Astro.props;
-const siteName = "UK Biz Directory"; // Placeholder for site name
+const siteName = "ChipFindr"; // Updated site name
 ---
 
 <!doctype html>
@@ -27,7 +27,6 @@ const siteName = "UK Biz Directory"; // Placeholder for site name
 		{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 	</head>
 	<body>
-		<SearchBar />
 		{breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
 		<slot />
 	</body>

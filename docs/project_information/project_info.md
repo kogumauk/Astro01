@@ -1,4 +1,4 @@
-This project is the implementaiton of a UK-based Business Listings Directory website
+This project is the implementation of a UK-based Business Listings Directory website
 The template we are building will serve various niches, but we are starting with Fish and Chip shops
 The goal is to become the Go-To destination for anyone with an interest in this niche 
 We are setting out to build a super-sleek, modern, world-class, ultra-performant, and highly SEO optimised website.

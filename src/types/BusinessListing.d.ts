@@ -82,4 +82,9 @@ export interface BusinessListing {
   reviewCount?: number; // Maps to JSON 'userRatingCount'
   createdAt?: Date; // Keep for internal tracking
   updatedAt?: Date; // Keep for internal tracking
+  
+  // Location-specific fields for search and filtering
+  town?: string; // Extracted from addressComponents
+  county?: string; // Extracted from addressComponents  
+  postcode?: string; // Extracted from addressComponents
 }

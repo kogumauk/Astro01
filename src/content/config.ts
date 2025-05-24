@@ -85,6 +85,11 @@ const businessListingSchema = z.object({
   reviewCount: z.number().optional(),
   createdAt: z.date().optional(), // Or z.string().datetime() if stored as ISO strings
   updatedAt: z.date().optional(), // Or z.string().datetime()
+  
+  // Location-specific fields for search and filtering
+  town: z.string().optional(),
+  county: z.string().optional(),
+  postcode: z.string().optional(),
 });
 
 const listingsCollection = defineCollection({
