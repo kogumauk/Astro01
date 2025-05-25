@@ -207,12 +207,14 @@ export function filterListings(
   return listings.filter(listing => {
     const matchesSearch = !searchTerm || 
       listing.name.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      listing.formattedAddress.toLowerCase().includes(searchTerm.toLowerCase());
+      listing.formattedAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (listing.primaryTypeDisplayName?.text || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesLocation = !location || 
       listing.town?.toLowerCase().includes(location.toLowerCase()) ||
       listing.county?.toLowerCase().includes(location.toLowerCase()) ||
-      listing.postcode?.toLowerCase().includes(location.toLowerCase());
+      listing.postcode?.toLowerCase().includes(location.toLowerCase()) ||
+      listing.formattedAddress.toLowerCase().includes(location.toLowerCase());
     
     return matchesSearch && matchesLocation;
   });

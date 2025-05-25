@@ -1,57 +1,18 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import SearchBar from '../components/SearchBar.astro';
-import BusinessCard from '../components/BusinessCard.astro';
-import { getSampleListings } from '../utils/staticDataLoader';
-import { filterListings } from '../utils/dataLoader';
-
-// Get search parameters
-const url = new URL(Astro.request.url);
-const searchQuery = url.searchParams.get('q') || '';
-const locationQuery = url.searchParams.get('location') || '';
-
-// Load and filter listings
-const allListings = getSampleListings();
-const filteredListings = filterListings(allListings, searchQuery, locationQuery);
 
 // Create breadcrumbs
 const breadcrumbs = [
   { label: 'Home', href: '/' },
   { label: 'Search Results' }
 ];
-
-// Generate page title and description
-const getPageTitle = () => {
-  if (searchQuery && locationQuery) {
-    return `${searchQuery} in ${locationQuery}`;
-  } else if (searchQuery) {
-    return `Search: ${searchQuery}`;
-  } else if (locationQuery) {
-    return `Fish & Chip Shops in ${locationQuery}`;
-  }
-  return 'Search Results';
-};
-
-const getPageDescription = () => {
-  const resultCount = filteredListings.length;
-  let base = `Found ${resultCount} fish & chip shop${resultCount !== 1 ? 's' : ''}`;
-  
-  if (searchQuery && locationQuery) {
-    base += ` for "${searchQuery}" in ${locationQuery}`;
-  } else if (searchQuery) {
-    base += ` matching "${searchQuery}"`;
-  } else if (locationQuery) {
-    base += ` in ${locationQuery}`;
-  }
-  
-  return base + '. Find opening times, reviews, and contact details.';
-};
 ---
 
 <Layout
-  title={getPageTitle()}
-  description={getPageDescription()}
-  keywords={`fish and chips, chippy, ${searchQuery}, ${locationQuery}, search, UK`}
+  title="Search Fish & Chip Shops"
+  description="Search for fish & chip shops across the UK. Find opening times, reviews, and contact details for local chippies."
+  keywords="fish and chips, chippy, search, UK, takeaway, restaurant"
   canonicalUrl={Astro.url.origin + Astro.url.pathname}
   breadcrumbs={breadcrumbs}
 >
@@ -59,46 +20,37 @@ const getPageDescription = () => {
     <!-- Search Header -->
     <section class="bg-blue-600 text-white py-8">
       <div class="container mx-auto px-4">
-        <h1 class="text-2xl md:text-3xl font-bold mb-6">
-          {getPageTitle()}
+        <h1 class="text-2xl md:text-3xl font-bold mb-6" id="pageTitle">
+          Search Fish & Chip Shops
         </h1>
         
         <!-- Search Bar -->
-        <SearchBar 
-          initialValue={searchQuery}
-          showLocationFilter={true}
-        />
+        <SearchBar showLocationFilter={true} />
       </div>
     </section>
 
     <!-- Results Section -->
     <section class="bg-gray-50 py-8">
       <div class="container mx-auto px-4">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p class="text-gray-600">Loading listings...</p>
+        </div>
+
         <!-- Results Info -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div id="resultsHeader" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4" style="display: none;">
           <div>
-            <p class="text-gray-600">
-              {filteredListings.length === 0 
-                ? 'No results found' 
-                : `Showing ${filteredListings.length} result${filteredListings.length !== 1 ? 's' : ''}`
-              }
-              {(searchQuery || locationQuery) && (
-                <span>
-                  {' '}for{' '}
-                  {searchQuery && <strong>"{searchQuery}"</strong>}
-                  {searchQuery && locationQuery && ' in '}
-                  {locationQuery && <strong>{locationQuery}</strong>}
-                </span>
-              )}
+            <p class="text-gray-600" id="resultsCount">
+              <!-- Will be populated by JavaScript -->
             </p>
           </div>
           
-          <!-- Sort Options (placeholder for future implementation) -->
+          <!-- Sort Options -->
           <div class="flex gap-2">
             <select 
               id="sortSelect" 
               class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              onchange="sortBusinesses(this.value)"
             >
               <option value="rating-high">Sort by: Rating (High to Low)</option>
               <option value="rating-low">Rating (Low to High)</option>
@@ -111,104 +63,79 @@ const getPageDescription = () => {
         </div>
 
         <!-- Results Grid -->
-        {filteredListings.length > 0 ? (
-          <div id="businessGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredListings.map((listing, index) => (
-              <div class="business-card" 
-                   data-rating={listing.rating || 0}
-                   data-reviews={listing.reviewCount || 0}
-                   data-name={listing.name.text}
-                   data-index={index}
-              >
-                <BusinessCard business={listing} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <!-- No Results -->
-          <div class="bg-white rounded-lg p-8 text-center">
-            <div class="text-6xl mb-4">🔍</div>
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">
-              No fish & chip shops found
-            </h2>
-            <p class="text-gray-600 mb-6">
-              {searchQuery || locationQuery 
-                ? 'Try adjusting your search criteria or browse all locations.'
-                : 'Try searching for a specific location or business name.'
-              }
-            </p>
-            
-            <!-- Search Suggestions -->
-            <div class="space-y-4">
-              <div>
-                <h3 class="font-medium text-gray-900 mb-2">Try searching for:</h3>
-                <div class="flex flex-wrap gap-2 justify-center">
-                  <a href="/search?q=fish+and+chips" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
-                    Fish & Chips
-                  </a>
-                  <a href="/search?q=takeaway" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
-                    Takeaway
-                  </a>
-                  <a href="/search?location=devon" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
-                    Devon
-                  </a>
-                  <a href="/search?location=brixham" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
-                    Brixham
-                  </a>
-                </div>
-              </div>
-              
-              <div class="pt-4 border-t">
-                <a 
-                  href="/"
-                  class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Back to Homepage
-                </a>
+        <div id="businessGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style="display: none;">
+          <!-- Results will be populated by JavaScript -->
+        </div>
+
+        <!-- No Results -->
+        <div id="noResults" class="bg-white rounded-lg p-8 text-center" style="display: none;">
+          <div class="text-6xl mb-4">🔍</div>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            No fish & chip shops found
+          </h2>
+          <p class="text-gray-600 mb-6" id="noResultsMessage">
+            Try adjusting your search criteria or browse all locations.
+          </p>
+          
+          <!-- Search Suggestions -->
+          <div class="space-y-4">
+            <div>
+              <h3 class="font-medium text-gray-900 mb-2">Try searching for:</h3>
+              <div class="flex flex-wrap gap-2 justify-center">
+                <button data-search="fish and chips" data-location="" class="suggestion-btn bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
+                  Fish & Chips
+                </button>
+                <button data-search="takeaway" data-location="" class="suggestion-btn bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
+                  Takeaway
+                </button>
+                <button data-search="" data-location="devon" class="suggestion-btn bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
+                  Devon
+                </button>
+                <button data-search="" data-location="brixham" class="suggestion-btn bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
+                  Brixham
+                </button>
               </div>
             </div>
+            
+            <div class="pt-4 border-t">
+              <a 
+                href="/"
+                class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Back to Homepage
+              </a>
+            </div>
           </div>
-        )}
-
-        <!-- Load More (placeholder for future pagination) -->
-        {filteredListings.length > 6 && (
-          <div class="text-center mt-8">
-            <button class="bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-              Load More Results
-            </button>
-          </div>
-        )}
+        </div>
       </div>
     </section>
 
     <!-- Search Tips -->
-    {filteredListings.length === 0 && (
-      <section class="bg-white py-12">
-        <div class="container mx-auto px-4">
-          <div class="max-w-2xl mx-auto text-center">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Search Tips</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h3 class="font-semibold text-gray-900 mb-2">🏪 Business Names</h3>
-                <p class="text-gray-600 text-sm">Search for specific fish & chip shop names like "Rockfish" or "Simply Fish"</p>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h3 class="font-semibold text-gray-900 mb-2">📍 Locations</h3>
-                <p class="text-gray-600 text-sm">Try town names, postcodes, or broader areas like "Devon" or "Brixham"</p>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h3 class="font-semibold text-gray-900 mb-2">🍟 Food Types</h3>
-                <p class="text-gray-600 text-sm">Search for "takeaway", "restaurant", or "fish and chips"</p>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h3 class="font-semibold text-gray-900 mb-2">🎯 Be Specific</h3>
-                <p class="text-gray-600 text-sm">Combine location and business type for better results</p>
-              </div>
+    <section class="bg-white py-12" id="searchTips">
+      <div class="container mx-auto px-4">
+        <div class="max-w-2xl mx-auto text-center">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Search Tips</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-900 mb-2">🏪 Business Names</h3>
+              <p class="text-gray-600 text-sm">Search for specific fish & chip shop names like "Rockfish" or "Simply Fish"</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-900 mb-2">📍 Locations</h3>
+              <p class="text-gray-600 text-sm">Try town names, postcodes, or broader areas like "Devon" or "Brixham"</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-900 mb-2">🍟 Food Types</h3>
+              <p class="text-gray-600 text-sm">Search for "takeaway", "restaurant", or "fish and chips"</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-900 mb-2">🎯 Be Specific</h3>
+              <p class="text-gray-600 text-sm">Combine location and business type for better results</p>
             </div>
           </div>
         </div>
-      </section>
-    )}
+      </div>
+    </section>
   </main>
 </Layout>
 
@@ -218,23 +145,219 @@ const getPageDescription = () => {
   }
 </style>
 
-<script>
+<script type="module">
+  // Client-side search functionality
+  let allListings = [];
+  let currentListings = [];
+  let currentSearch = '';
+  let currentLocation = '';
+
+  // DOM elements
+  const loadingState = document.getElementById('loadingState');
+  const resultsHeader = document.getElementById('resultsHeader');
+  const businessGrid = document.getElementById('businessGrid');
+  const noResults = document.getElementById('noResults');
+  const resultsCount = document.getElementById('resultsCount');
+  const searchTips = document.getElementById('searchTips');
+  const pageTitle = document.getElementById('pageTitle');
+  const sortSelect = document.getElementById('sortSelect');
+
+  // Load listings data
+  async function loadListings() {
+    try {
+      console.log('🔄 Loading listings data...');
+      const response = await fetch('/data/listings.json');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const data = await response.json();
+      allListings = data.listings;
+      
+      console.log(`✅ Loaded ${allListings.length} listings`);
+      
+      // Hide loading state
+      loadingState.style.display = 'none';
+      resultsHeader.style.display = 'flex';
+      businessGrid.style.display = 'grid';
+      
+      // Parse URL parameters and perform initial search
+      const params = new URLSearchParams(window.location.search);
+      const searchQuery = params.get('q') || '';
+      const locationQuery = params.get('location') || '';
+      
+      // Update search bar
+      updateSearchBar(searchQuery, locationQuery);
+      
+      // Perform initial search
+      performSearch(searchQuery, locationQuery);
+      
+    } catch (error) {
+      console.error('❌ Error loading listings:', error);
+      loadingState.innerHTML = `
+        <div class="text-red-600">
+          <div class="text-4xl mb-4">⚠️</div>
+          <p>Error loading listings. Please refresh the page.</p>
+        </div>
+      `;
+    }
+  }
+
+  // Update search bar values
+  function updateSearchBar(searchTerm, location) {
+    const searchInput = document.querySelector('input[name="q"]');
+    const locationSelect = document.querySelector('select[name="location"]');
+    
+    if (searchInput) searchInput.value = searchTerm;
+    if (locationSelect) locationSelect.value = location;
+  }
+
+  // Fast client-side filtering using pre-built searchText
+  function filterListings(listings, searchTerm = '', location = '') {
+    if (!searchTerm && !location) return listings;
+    
+    return listings.filter(listing => {
+      // Fast search using pre-built searchText
+      const matchesSearch = !searchTerm || 
+        listing.searchText.includes(searchTerm.toLowerCase());
+      
+      const matchesLocation = !location || 
+        listing.town?.toLowerCase().includes(location.toLowerCase()) ||
+        listing.county?.toLowerCase().includes(location.toLowerCase()) ||
+        listing.postcode?.toLowerCase().includes(location.toLowerCase()) ||
+        listing.formattedAddress.toLowerCase().includes(location.toLowerCase()) ||
+        listing.searchText.includes(location.toLowerCase());
+      
+      return matchesSearch && matchesLocation;
+    });
+  }
+
+  // Render business cards with inline HTML (no component dependency)
+  function renderBusinessCards(listings) {
+    if (listings.length === 0) {
+      businessGrid.style.display = 'none';
+      noResults.style.display = 'block';
+      searchTips.style.display = 'block';
+      
+      const message = currentSearch || currentLocation 
+        ? 'Try adjusting your search criteria or browse all locations.'
+        : 'Try searching for a specific location or business name.';
+      document.getElementById('noResultsMessage').textContent = message;
+      
+      resultsCount.textContent = 'No results found';
+      return;
+    }
+
+    businessGrid.style.display = 'grid';
+    noResults.style.display = 'none';
+    searchTips.style.display = currentSearch || currentLocation ? 'none' : 'block';
+    
+    // Update results count
+    resultsCount.innerHTML = `
+      Showing ${listings.length} result${listings.length !== 1 ? 's' : ''}
+      ${(currentSearch || currentLocation) ? `
+        <span>
+          ${' '}for${' '}
+          ${currentSearch ? `<strong>"${currentSearch}"</strong>` : ''}
+          ${currentSearch && currentLocation ? ' in ' : ''}
+          ${currentLocation ? `<strong>${currentLocation}</strong>` : ''}
+        </span>
+      ` : ''}
+    `;
+    
+    // Render cards with fast template strings
+    businessGrid.innerHTML = listings.map((listing, index) => `
+      <div class="business-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow" 
+           data-rating="${listing.rating || 0}"
+           data-reviews="${listing.reviewCount || 0}"
+           data-name="${listing.name.text}"
+           data-index="${index}">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 leading-tight">${listing.name.text}</h3>
+            ${listing.verified ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">✓ Verified</span>' : ''}
+          </div>
+          
+          <div class="flex items-center gap-2 mb-3">
+            ${listing.rating ? `
+              <div class="flex items-center">
+                <span class="text-yellow-400 text-sm">${'★'.repeat(Math.floor(listing.rating))}${'☆'.repeat(5-Math.floor(listing.rating))}</span>
+                <span class="text-sm text-gray-600 ml-1">${listing.rating.toFixed(1)}</span>
+              </div>
+            ` : ''}
+            ${listing.reviewCount ? `<span class="text-xs text-gray-500">(${listing.reviewCount} reviews)</span>` : ''}
+          </div>
+          
+          <div class="space-y-2 mb-4">
+            <div class="flex items-start gap-2">
+              <span class="text-blue-600 text-sm">📍</span>
+              <span class="text-gray-600 text-sm">${listing.formattedAddress}</span>
+            </div>
+            ${listing.nationalPhoneNumber ? `
+              <div class="flex items-center gap-2">
+                <span class="text-green-600 text-sm">📞</span>
+                <a href="tel:${listing.nationalPhoneNumber}" class="text-gray-600 text-sm hover:text-blue-600">${listing.nationalPhoneNumber}</a>
+              </div>
+            ` : ''}
+          </div>
+          
+          <div class="flex gap-2 pt-4 border-t border-gray-100">
+            ${listing.nationalPhoneNumber ? `
+              <a href="tel:${listing.nationalPhoneNumber}" class="flex-1 bg-green-600 text-white px-3 py-2 rounded text-center text-sm hover:bg-green-700 transition-colors">
+                Call
+              </a>
+            ` : ''}
+            <button class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-center text-sm hover:bg-blue-700 transition-colors">
+              Details
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Perform search with debouncing
+  let searchTimeout;
+  function performSearch(searchTerm, location, updateUrl = true) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentSearch = searchTerm;
+      currentLocation = location;
+      
+      console.log(`🔍 Searching: "${searchTerm}" in "${location}"`);
+      
+      // Update URL without page reload
+      if (updateUrl) {
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('q', searchTerm);
+        if (location) params.set('location', location);
+        
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState(null, '', newUrl);
+      }
+      
+      // Update page title
+      let title = 'Search Results';
+      if (searchTerm && location) {
+        title = `${searchTerm} in ${location}`;
+      } else if (searchTerm) {
+        title = `Search: ${searchTerm}`;
+      } else if (location) {
+        title = `Fish & Chip Shops in ${location}`;
+      }
+      pageTitle.textContent = title;
+      document.title = title + ' - ChipFindr';
+      
+      // Filter and render
+      const filteredListings = filterListings(allListings, searchTerm, location);
+      currentListings = filteredListings;
+      renderBusinessCards(filteredListings);
+      
+      console.log(`✅ Found ${filteredListings.length} results`);
+    }, 100); // 100ms debounce
+  }
+
+  // Sort function
   function sortBusinesses(sortType) {
-    console.log('Sorting by:', sortType);
-    
-    const grid = document.getElementById('businessGrid');
-    if (!grid) {
-      console.error('Grid not found');
-      return;
-    }
-    
-    const cards = Array.from(grid.querySelectorAll('.business-card'));
-    console.log('Found cards:', cards.length);
-    
-    if (cards.length === 0) {
-      console.error('No business cards found');
-      return;
-    }
+    const cards = Array.from(businessGrid.querySelectorAll('.business-card'));
     
     cards.sort((a, b) => {
       const aRating = parseFloat(a.dataset.rating) || 0;
@@ -248,38 +371,51 @@ const getPageDescription = () => {
         case 'rating-high':
           if (bRating !== aRating) return bRating - aRating;
           return bReviews - aReviews;
-          
         case 'rating-low':
           if (aRating !== bRating) return aRating - bRating;
           return aReviews - bReviews;
-          
         case 'name-az':
           return aName.localeCompare(bName);
-          
         case 'name-za':
           return bName.localeCompare(aName);
-          
         case 'reviews-most':
           return bReviews - aReviews;
-          
         case 'reviews-least':
           return aReviews - bReviews;
-          
         default:
           return 0;
       }
     });
     
-    // Clear the grid and re-add sorted cards
-    while (grid.firstChild) {
-      grid.removeChild(grid.firstChild);
+    businessGrid.innerHTML = '';
+    cards.forEach(card => businessGrid.appendChild(card));
+  }
+
+  // Event listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    loadListings();
+    
+    // Sort change handler
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        sortBusinesses(e.target.value);
+      });
     }
     
-    cards.forEach(card => {
-      grid.appendChild(card);
+    // Suggestion button handlers
+    document.querySelectorAll('.suggestion-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const searchTerm = btn.dataset.search;
+        const location = btn.dataset.location;
+        updateSearchBar(searchTerm, location);
+        performSearch(searchTerm, location);
+      });
     });
-  }
-  
-  // Make sure the function is available globally
-  window.sortBusinesses = sortBusinesses;
+  });
+
+  // Global functions for SearchBar component
+  window.chipFindrSearch = {
+    performSearch,
+    updateSearchBar
+  };
 </script>
